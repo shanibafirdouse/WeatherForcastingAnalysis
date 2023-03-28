@@ -1,0 +1,86 @@
+2)  // to get the average temperature
+
+SELECT avg(temperature) from weather;
+
+     // used case statement to find temperature is hot or cold
+
+SELECT Date_new, temperature,
+       CASE WHEN temperature > 44.65611381696996 then 'hot'
+             WHEN temperature <44.65611381696996then 'Cold'
+		END temperature_type
+FROM  weather;
+
+5) // Average of Average_humidity in each day
+   
+SELECT AVG(Average_humidity) as avg_humidity,Date_new  from weather GROUP BY Date_new
+ORDER BY avg_humidity ;
+
+9)  SELECT DISTINCT  COUNT(Date_new) as total_days FROM weather WHERE temperature<32;
+
+3)  // checked for all 4 consecutive days
+
+WITH t1 AS
+(SELECT * , row_number() over(order by Date_var) as rn, Date_new - cast(row_number() over(order by Date_var)  AS UNSIGNED) as difference
+FROM weather WHERE temperature<30),
+t2 AS
+(SELECT * , COUNT(*) over(partition by difference) as no_of_records FROM t1)
+ SELECT Date_var FROM t2 WHERE no_of_records = 4 ;
+
+10) // Foreign key for month column
+
+CREATE TABLE Month_name (name_of_month VARCHAR(20) ,
+ Month_id INT);
+ ALTER TABLE Month_name ADD PRIMARY KEY(Month_id);
+ALTER TABLE weather ADD CONSTRAINT  FOREIGN KEY(Month_var) REFERENCES Month_name(Month_id);
+ INSERT INTO Month_name VALUES('january',01),('february',02),('March',03),('April',04),('May',05),
+ ('june',06),('july',07),('august',08),('september',09),('october',10),('november',11),('december',12);
+ 
+
+6) // Average WINDSPEED
+
+
+WITH t1 AS
+(SELECT * , row_number() over(order by Date_var) as rn, Date_new - cast(row_number() over(order by Date_var)  AS UNSIGNED) as difference
+FROM weather WHERE temperature<30),
+t2 AS
+(SELECT * , COUNT(*) over(partition by difference) as no_of_records FROM t1),
+t3 AS
+(SELECT Date_new , Average_windspeed FROM t2 WHERE no_of_records = 4)
+SELECT AVG(Average_windspeed) , Date_new FROM t3 GROUP BY YEAR(Date_new);
+
+4) //  maximum number of days for which temperature dropped
+
+
+WITH K1 AS
+  (SELECT 
+    Date_new,
+    temperature,
+     temperature - LAG(temperature) OVER (ORDER BY Date_new) AS prev_temp
+  FROM 
+    weather),
+    K2 AS 
+    (SELECT * , row_number() over(order by Date_var) as rn, Date_new - cast(row_number() over(order by Date_var)  AS UNSIGNED) as difference
+FROM K1),
+K3 AS(
+SELECT * , COUNT(*) over(partition by difference) as no_of_records FROM K2)
+SELECT MAX(no_of_records) FROM K3;
+
+1) // count of the minimum number of days for the time when temperature reduced
+
+
+WITH K1 AS
+  (SELECT 
+    Date_new,
+    temperature,
+     temperature - LAG(temperature) OVER (ORDER BY Date_var) AS prev_temp
+  FROM 
+    weather),
+    K2 AS 
+    (SELECT * , row_number() over(order by Date_var) as rn, Date_var - cast(row_number() over(order by Date_var)  AS UNSIGNED) as difference
+FROM K1),
+K3 AS(
+SELECT * , COUNT(*) over(partition by difference) as no_of_records FROM K2)
+SELECT MIN(no_of_records) FROM K3;
+
+
+
